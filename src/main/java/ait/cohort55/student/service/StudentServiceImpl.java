@@ -7,17 +7,30 @@ import ait.cohort55.student.dto.StudentDto;
 import ait.cohort55.student.dto.StudentUpdateDto;
 import ait.cohort55.student.dto.exceptions.StudentNotFoundException;
 import ait.cohort55.student.model.Student;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
-@Component
+
+//@Component
+//@AllArgsConstructor
+@Service
+@RequiredArgsConstructor // toljka dlja final polja
 public class StudentServiceImpl implements StudentService {
+//    @Autowired
+    private final StudentRepository studentRepository; // delaem final
 
-    @Autowired
-    private StudentRepository studentRepository;
+    // esli estj constructor to @Autowired ne nado pisatj, spring sam dobawit
+
+//    public StudentServiceImpl(StudentRepository studentRepository) { // sawisimostj
+//        this.studentRepository = studentRepository;
+//    }
 
     @Override
     public Boolean addStudent(StudentAddDto studentAddDto) {
@@ -42,35 +55,52 @@ public class StudentServiceImpl implements StudentService {
         return new StudentDto(student.getId(), student.getName(), student.getScores());
     }
 
+//    @Override
+//    public StudentAddDto updateStudent(Long id, StudentUpdateDto studentUpdateDto) {
+//        Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
+//        student.setName(studentUpdateDto.getName());
+//        student.setPassword(studentUpdateDto.getPassword());
+//        studentRepository.save(student);
+//        return new StudentAddDto(student.getId(), student.getName(), student.getPassword());
+//    }
     @Override
     public StudentAddDto updateStudent(Long id, StudentUpdateDto studentUpdateDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        student.setName(studentUpdateDto.getName());
-        student.setPassword(studentUpdateDto.getPassword());
-        studentRepository.save(student);
+        if (studentUpdateDto.getName() != null) {
+            student.setName(studentUpdateDto.getName());
+        }
+        if (studentUpdateDto.getPassword() != null) {
+            student.setPassword(studentUpdateDto.getPassword());
+        }
         return new StudentAddDto(student.getId(), student.getName(), student.getPassword());
     }
 
     @Override
     public Boolean addScore(Long id, ScoreDto scoreDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        student.getScores().put(scoreDto.getExamName(), scoreDto.getScore());
-        studentRepository.save(student);
-        return true;
+        return student.addScore(scoreDto.getExamName(), scoreDto.getScore());
     }
 
     @Override
     public List<StudentDto> findStudentsByName(String name) {
-        return List.of();
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> name.equalsIgnoreCase(s.getName()))
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
     }
 
     @Override
-    public Long getStudentsQuantityByName(Set<String> studentName) {
-        return 0L;
+    public Long getStudentsQuantityByName(Set<String> names) {
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> names.contains(s.getName()))
+                .count();
     }
 
     @Override
     public List<StudentDto> findStudentsByExamNameMinScore(String exam, Integer minScore) {
-        return List.of();
+        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+                .filter(s -> s.getScores().containsKey(exam) && s.getScores().get(exam) > minScore)
+                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .toList();
     }
 }
