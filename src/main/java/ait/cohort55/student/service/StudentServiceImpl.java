@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 
@@ -34,7 +35,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Boolean addStudent(StudentAddDto studentAddDto) {
-        if(studentRepository.findById(studentAddDto.getId()).isPresent()) {
+        if(studentRepository.existsById(studentAddDto.getId())) {
             return false;
         }
         Student student = new Student(studentAddDto.getId(), studentAddDto.getName(), studentAddDto.getPassword());
@@ -72,34 +73,48 @@ public class StudentServiceImpl implements StudentService {
         if (studentUpdateDto.getPassword() != null) {
             student.setPassword(studentUpdateDto.getPassword());
         }
+        studentRepository.save(student);
         return new StudentAddDto(student.getId(), student.getName(), student.getPassword());
     }
 
     @Override
     public Boolean addScore(Long id, ScoreDto scoreDto) {
         Student student = studentRepository.findById(id).orElseThrow(StudentNotFoundException::new);
-        return student.addScore(scoreDto.getExamName(), scoreDto.getScore());
+        boolean res = student.addScore(scoreDto.getExamName(), scoreDto.getScore());
+        studentRepository.save(student);
+        return res;
     }
 
     @Override
     public List<StudentDto> findStudentsByName(String name) {
-        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
-                .filter(s -> name.equalsIgnoreCase(s.getName()))
+//        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+//                .filter(s -> name.equalsIgnoreCase(s.getName()))
+//                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+//                .toList();
+        return studentRepository.findByNameIgnoreCase(name)
                 .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
                 .toList();
     }
 
     @Override
     public Long getStudentsQuantityByName(Set<String> names) {
-        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
-                .filter(s -> names.contains(s.getName()))
-                .count();
+//        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+//                .filter(s -> names.contains(s.getName()))
+//                .count();
+       Set<String> lowerCase = names.stream()
+               .map(String::toLowerCase)
+               .collect(Collectors.toSet());
+
+       return studentRepository.countByNameInIgnoreCase(lowerCase);
     }
 
     @Override
     public List<StudentDto> findStudentsByExamNameMinScore(String exam, Integer minScore) {
-        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
-                .filter(s -> s.getScores().containsKey(exam) && s.getScores().get(exam) > minScore)
+//        return StreamSupport.stream(studentRepository.findAll().spliterator(), false)
+//                .filter(s -> s.getScores().containsKey(exam) && s.getScores().get(exam) > minScore)
+//                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+//                .toList();
+        return studentRepository.findByExamNameAndMinScore(exam, minScore).stream()
                 .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
                 .toList();
     }

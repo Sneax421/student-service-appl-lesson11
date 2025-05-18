@@ -50,7 +50,7 @@ public class StudentController  {
     }
 
     @GetMapping("/quantity/students")
-    public Long getStudentsQuantityByName(@RequestParam List<String> studentName) {
+    public Long getStudentsQuantityByName(@RequestParam("names") List<String> studentName) {
         return studentService.getStudentsQuantityByName(new HashSet<>(studentName));
     }
 
