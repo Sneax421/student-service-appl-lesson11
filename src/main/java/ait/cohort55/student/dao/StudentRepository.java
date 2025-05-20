@@ -18,7 +18,4 @@ public interface StudentRepository extends CrudRepository<Student, Long> {
         @Query(value = "{ 'scores.?0': { $gt: ?1 } }")
         List<Student> findByExamNameAndMinScore(String exam, Integer minScore);
 
-        // @Query
-    // realizionaja basa danih
-
 }
