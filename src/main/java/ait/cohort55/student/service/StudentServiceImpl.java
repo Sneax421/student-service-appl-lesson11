@@ -74,7 +74,8 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public List<StudentDto> findStudentsByName(String name) {
         return studentRepository.findByNameIgnoreCase(name)
-                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+//                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .map(s -> modelMapper.map(s, StudentDto.class))
                 .toList();
     }
 
@@ -90,7 +91,8 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public List<StudentDto> findStudentsByExamNameMinScore(String exam, Integer minScore) {
         return studentRepository.findByExamNameAndMinScore(exam, minScore).stream()
-                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+//                .map(s -> new StudentDto(s.getId(), s.getName(), s.getScores()))
+                .map(s -> modelMapper.map(s, StudentDto.class))
                 .toList();
     }
 
